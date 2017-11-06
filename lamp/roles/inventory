@@ -1,0 +1,8 @@
+[vagrant]
+127.0.0.1 ansible_connection=local
+
+[web]
+129.59.107.85 ansible_connection=ssh ansible_python_interpreter=/usr/bin/python3 
+
+[data]
+129.59.107.183 ansible_connection=ssh ansible_python_interpreter=/usr/bin/python3

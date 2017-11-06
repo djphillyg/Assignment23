@@ -1,0 +1,74 @@
+---
+
+
+- name: "Web"
+  hosts: "{{ group_vars['Database'][0] }}"
+  remote_user: ubuntu
+  gather_facts: no
+  become: true
+- tasks:
+  - name: Copy host file
+    lineinfile:
+     path: /etc/hosts
+     regexp: 'localhost'
+     line: 127.0.0.1 localhost web3 
+  - name: install apache2 and php and git
+    apt:
+      name: '{{ item }}'
+      state: latest
+      update_cache: yes
+    with_items: 
+      - apache2
+      - php
+      - libapache2-mod-php
+      - php-mcrypt
+      - php-mysql
+      - git
+  - name: add global server name
+    lineinfile:
+      path: /etc/apache2/apache2.conf
+      line: ServerName 129.59.107.74
+
+  - name: restart apache2
+    service: 
+      name: apache2
+      state: restarted
+
+  - name: delete directory
+    file: 
+      path: /var/www/html
+      state: absent
+
+  - name: create directory
+    file:
+      path: /var/www/html
+      state: directory
+      mode: 0777
+    register: create
+  - name: clone repo
+    git:
+      repo: https://github.com/doc-vu/phpMySQLapp
+      dest: /var/www/html/
+    register: git_finished
+    when: create.changed
+
+  - name: restart apache2
+    service:
+      name: apache2
+      state: restarted
+
+  - name: change bookDatabase.php
+    replace:
+      path: /var/www/html/books/includes/bookDatabase.php
+      regexp: '127.0.0.1'
+      replace: "{{ group_vars['Database'][0]}}"
+
+  - name: change movieDatabase.php
+    replace:
+      path: /var/www/html/movies/includes/movieDatabase.php
+      regexp: '127.0.0.1'
+      replace: "{{ group_vars['Database'][0] }}"
+  - name: restart apache2
+    service:
+      name: apache2
+      state: restarted

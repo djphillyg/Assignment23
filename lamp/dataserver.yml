@@ -1,0 +1,104 @@
+---
+ - name: "DataServer"
+#prep work
+ pre_tasks:
+  - name: add server name to hostfile
+    lineinfile:
+      path: /etc/hosts
+      regexp: 'localhost'
+      line: 127.0.0.1 localhost data3 
+
+#database work
+  tasks:
+  - name: install mysql and git
+    apt: 
+      name: '{{ item }}'
+      state: latest
+      update_cache: yes
+    with_items: 
+      - mysql-server
+      - python3-mysqldb
+      - git
+
+  - name: clone repo
+    git:
+      repo: https://github.com/doc-vu/phpMySQLapp
+      dest: /home/ubuntu/phpMySQLapp
+    register: git_finished
+
+  - name: delete anonymous mysql server user
+    mysql_user: 
+      name: ''
+      state: absent
+      login_password: admin
+      login_user: root
+
+  - name: secure mysql root user
+    mysql_user:
+      user: root
+      password: admin
+      host: '{{ item }}'
+      login_password: admin
+      login_user: root
+    with_items:
+      - 127.0.0.1
+      - localhost
+      - ::1
+      - data3
+
+  - name: remove mysql test database
+    mysql_db:
+      db: test
+      state: absent
+      login_password: admin
+      login_user: root
+
+  - name: create bookstore database
+    mysql_db:
+      login_user: root
+      login_password: admin
+      login_port: 3306
+      name: bookstore
+      state: import
+      collation: utf8_unicode_ci
+      target: /home/ubuntu/phpMySQLapp/mySqlDB/bookDB.sql
+
+  - name: create movie database
+    mysql_db:
+      login_user: root
+      login_password: admin
+      login_port: 3306
+      name: moviedb
+      state: import
+      collation: utf8_unicode_ci
+      target: /home/ubuntu/phpMySQLapp/mySqlDB/movieDB.sql
+
+  - name: restart mysql
+    service:
+      name: mysql
+      state: restarted
+  
+  - name: create user
+    mysql_user: 
+      login_user: root
+      login_password: admin
+      login_port: 3306
+      name: root
+      password: admin
+      priv: '*.*:ALL,GRANT'
+      host: '%'
+      state: present
+
+  - name: unbind
+    replace: 
+      path: '/etc/mysql/mysql.conf.d/mysqld.cnf'
+      regexp: 'bind'
+      replace: '#bind' 
+      
+  - name: restart mysql
+    service:
+      name: mysql
+      state: restarted
+
+...
+

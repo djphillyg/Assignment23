@@ -1,0 +1,67 @@
+---
+
+
+  # Prerequisite Key Permission and Ansible Configuration changes
+
+    - name: Chmod600 to key permissions
+      shell: chmod 600 /home/ubuntu/.ssh/pbh_key.pem
+
+    - name: config ansible.cfg
+      replace:
+        path: /etc/ansible/ansible.cfg
+        regexp: '/vagrant/inventory'
+        replace: ./hosts
+    - name: copy ansible.cfg file
+      copy:
+        src: /home/ubuntu/.ansible.cfg
+        dest: /etc/ansible/ansible.cfg
+    
+    - name: copy ansible host file
+      copy:
+        src: /vagrant/inventory
+        dest: /etc/ansible/hosts
+    - name: install python shade
+      apt:
+        name: python-shade
+        state: latest
+        update-cache: yes
+
+ # Spawn the Web Server Instance and Database Server
+
+    - name: Create Web Server Instance
+      os_server:
+          name: web3
+          state: present
+          auth:
+            auth_url: https://keystone.isis.vanderbilt.edu:5000/v2.0/
+            username: goldbepa
+            password: hymVh2vr6u
+            project_name: "PBH Team"
+          image: "Ubuntu-16.04_20170605"
+          key_name: key
+          flavor: m1.small
+          nics:
+            - net-id: b16b0244-e1b5-4d36-90ff-83a0d87d8682
+          security_groups: default
+          floating_ips:
+           - 129.59.107.85
+          wait: yes
+    - name: create data server instance
+      os_server:
+        name: web3
+        state: present
+        auth:
+          auth_url: https://keystone.isis.vanderbilt.edu:5000/v2.0/
+          username: goldbepa
+          password: hymVh2vr6u
+          project_name: "PBH Team"
+        image: "Ubuntu-16.04_20170605"
+        key_name: key
+        flavor: m1.small
+        nics:
+         - net-id: b16b0244-e1b5-4d36-90ff-83a0d87d8682
+        security_groups: default
+        floating_ips:
+         - 129.59.107.85
+        wait: yes
+    

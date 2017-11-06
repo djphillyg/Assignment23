@@ -1,0 +1,33 @@
+---
+
+  - name: configure vagrant vm
+    hosts: vagrant
+    remote_user: ubuntu
+    become: true
+    gather_facts: no
+
+    pre_tasks:
+      - name: install python
+        raw: "test -e /usr/bin/python || (apt -y update && install -y python-minimal)"
+    roles:
+      - vagrant
+  
+  # - name: deploy and set up web server
+  #   hosts: web
+  #   remote_user: ubuntu
+  #   become: true
+  #   gather_facts: no
+  #   roles:
+  #     - webserver
+
+  # - name: configure and deploy database server
+  #   hosts: data
+  #   remote_user: ubuntu
+  #   become: true
+  #   gather_facts: no
+  #   roles:
+  #     - dataserver
+
+
+
+    

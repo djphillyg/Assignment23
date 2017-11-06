@@ -1,0 +1,103 @@
+---
+
+
+  # Prerequisite Key Permission and Ansible Configuration changes
+
+    - name: Chmod600 to key permissions
+      shell: chmod 600 /home/ubuntu/.ssh/pbh_key.pem
+
+    - name: config ansible.cfg
+      replace:
+        path: /etc/ansible/ansible.cfg
+        regexp: '/vagrant/inventory'
+        replace: ./hosts
+    - name: copy ansible.cfg file
+      copy:
+        src: /home/ubuntu/.ansible.cfg
+        dest: /etc/ansible/ansible.cfg
+    
+    - name: copy ansible host file
+      copy:
+        src: /vagrant/inventory
+        dest: /etc/ansible/hosts
+    - name:
+      apt: name=python-pip state=present
+      become: true
+    - pip:
+        name: shade
+    - pip:
+        name: python-openstackclient
+    
+
+ # Spawn the Web Server Instance and Database Server
+
+    - name: Create Web Server Instance
+      os_server:
+          name: web3
+          state: present
+          auth:
+            auth_url: https://keystone.isis.vanderbilt.edu:5000/v2.0
+            username: goldbepa
+            password: hymVh2vr6u
+            project_name: "Cloud Class"
+          name: PHBWS_Instance
+          image: "Ubuntu-16.04_20170605"
+          key_name: pbh_key
+          flavor: m1.small
+          nics:
+            - net-id: b16b0244-e1b5-4d36-90ff-83a0d87d8682
+          security_groups: default
+          auto_floating_ip: true
+          wait: yes
+    - name: create data server instance
+      os_server:
+        name: web3
+        state: present
+        auth:
+          auth_url: https://keystone.isis.vanderbilt.edu:5000/v2.0/
+          username: goldbepa
+          password: hymVh2vr6u
+          project_name: "Cloud Class"
+        name: PHBDS_Instance
+        image: "Ubuntu-16.04_20170605"
+        key_name: pbh_key
+        flavor: m1.small
+        nics:
+         - net-id: b16b0244-e1b5-4d36-90ff-83a0d87d8682
+        security_groups: default
+        auto_floating_ip: true
+        wait: yes
+    - name: "Shell commands"
+      shell: |
+        export OS_AUTH_URL=https://keystone.isis.vanderbilt.edu:5000/v3
+        export OS_PROJECT_ID=7b7cacfc1d3c4973a2666a26cf1a40ff
+        export OS_PROJECT_NAME="Cloud Class"
+        export OS_USER_DOMAIN_NAME="Default"
+        export OS_USERNAME="goldbepa"
+        export OS_PASSWORD='hymVh2vr6u'
+        export OS_REGION_NAME="RegionOne"
+        export OS_INTERFACE=public
+        export OS_IDENTITY_API_VERSION=3
+        server=$(openstack server list --name group5assignment2Server   | grep internal_network | awk '{print $9}')
+        database=$(openstack server list --name group5assignment2Database | grep internal_network | awk '{print $9}')
+        unset OS_AUTH_URL
+        unset OS_PROJECT_ID
+        unset OS_PROJECT_NAME
+        unset OS_USER_DOMAIN_NAME
+        unset OS_USERNAME
+        unset OS_PASSWORD
+        unset OS_REGION_NAME
+        unset OS_INTERFACE
+        unset OS_IDENTITY_API_VERSION
+        cd /home/ubuntu/lamp
+        echo [all_servers:vars] >> InventoryOnWebServer
+        echo ansible_ssh_private_key_file = /home/ubuntu/.ssh/pbh_key.pem >> InventoryOnWebServer
+        echo [all_servers:children] >> InventoryOnWebServer
+        echo WebServer >> InventoryOnWebServer
+        echo Database >> InventoryOnWebServer
+        echo Slave >> InventoryOnWebServer
+        echo "[WebServer]" >> InventoryOnWebServer
+        echo $server >> InventoryOnWebServer
+        echo "[Database]" >> InventoryOnWebServer
+        echo $database >> InventoryOnWebServer
+        ansible-playbook webserver.yml -i InventoryOnWebServer
