@@ -100,4 +100,3 @@
         echo $server >> InventoryOnWebServer
         echo "[Database]" >> InventoryOnWebServer
         echo $database >> InventoryOnWebServer
-        ansible-playbook webserver.yml -i InventoryOnWebServer
