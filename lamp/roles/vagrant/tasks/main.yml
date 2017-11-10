@@ -40,7 +40,7 @@
             username: goldbepa
             password: hymVh2vr6u
             project_name: "Cloud Class"
-          name: PHBWS_Instance
+          name: PHBWS_Instance1
           image: "Ubuntu-16.04_20170605"
           key_name: pbh_key
           flavor: m1.small
@@ -48,17 +48,16 @@
             - net-id: b16b0244-e1b5-4d36-90ff-83a0d87d8682
           security_groups: default
           auto_floating_ip: true
-          wait: yes
     - name: create data server instance
       os_server:
         name: web3
         state: present
         auth:
-          auth_url: https://keystone.isis.vanderbilt.edu:5000/v2.0/
+          auth_url: https://keystone.isis.vanderbilt.edu:5000/v2.0
           username: goldbepa
           password: hymVh2vr6u
           project_name: "Cloud Class"
-        name: PHBDS_Instance
+        name: PHBDS_Instance1
         image: "Ubuntu-16.04_20170605"
         key_name: pbh_key
         flavor: m1.small
@@ -66,7 +65,6 @@
          - net-id: b16b0244-e1b5-4d36-90ff-83a0d87d8682
         security_groups: default
         auto_floating_ip: true
-        wait: yes
     - name: "Shell commands"
       shell: |
         export OS_AUTH_URL=https://keystone.isis.vanderbilt.edu:5000/v3
@@ -74,7 +72,7 @@
         export OS_PROJECT_NAME="Cloud Class"
         export OS_USER_DOMAIN_NAME="Default"
         export OS_USERNAME="goldbepa"
-        export OS_PASSWORD='hymVh2vr6u'
+        export OS_PASSWORD="hymVh2vr6u"
         export OS_REGION_NAME="RegionOne"
         export OS_INTERFACE=public
         export OS_IDENTITY_API_VERSION=3
