@@ -76,8 +76,8 @@
         export OS_REGION_NAME="RegionOne"
         export OS_INTERFACE=public
         export OS_IDENTITY_API_VERSION=3
-        server=$(openstack server list --name group5assignment2Server   | grep internal_network | awk '{print $9}')
-        database=$(openstack server list --name group5assignment2Database | grep internal_network | awk '{print $9}')
+        server=$(openstack server list --name PHBWS_Instance1   | grep internal_network | awk '{print $9}')
+        database=$(openstack server list --name PHBDS_Instance1 | grep internal_network | awk '{print $9}')
         unset OS_AUTH_URL
         unset OS_PROJECT_ID
         unset OS_PROJECT_NAME
