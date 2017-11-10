@@ -1,74 +1,83 @@
----
-
-
-- name: "Web"
-  hosts: "{{ group_vars['Database'][0] }}"
-  remote_user: ubuntu
+- name: "Web server set up"
+  hosts: WebServer
+  remote_user:  ubuntu
   gather_facts: no
   become: true
-- tasks:
-  - name: Copy host file
-    lineinfile:
-     path: /etc/hosts
-     regexp: 'localhost'
-     line: 127.0.0.1 localhost web3 
-  - name: install apache2 and php and git
+
+  tasks:
+
+  - name: "install python"
+    raw: "test -e /usr/bin/python || (apt -y update && apt install -y python-minimal)"
+
+  - name: "Install apache2"
     apt:
-      name: '{{ item }}'
-      state: latest
-      update_cache: yes
-    with_items: 
-      - apache2
-      - php
-      - libapache2-mod-php
-      - php-mcrypt
-      - php-mysql
-      - git
-  - name: add global server name
-    lineinfile:
-      path: /etc/apache2/apache2.conf
-      line: ServerName 129.59.107.74
+       name: apache2
+       update_cache: yes
+       state: latest
 
-  - name: restart apache2
-    service: 
-      name: apache2
-      state: restarted
+  - name: "Install php"
+    apt:
+       name: php
+    become: true
 
-  - name: delete directory
-    file: 
-      path: /var/www/html
-      state: absent
+  - name: "Install php-mysql"
+    apt:
+       name: php-mysql
 
-  - name: create directory
+  - name: "Install more php stuff"
+    apt:
+       name: libapache2-mod-php
+
+  - name: "Installing last of php stuff"
+    apt:
+       name: php-mcrypt
+
+  - name: "Restart apache2"
+    service:
+       name: apache2
+       state: restarted
+
+  - name: "install git"
+    apt:
+       name: git
+       update_cache: yes
+       state: latest
+
+  - name: "Install mysql-client"
+    apt:
+       name: mysql-client
+       state: present
+       update_cache: yes
+
+  - name: "Delete directory"
     file:
-      path: /var/www/html
-      state: directory
-      mode: 0777
+       path: /var/www/html
+       state: absent
+
+  - name: "Create directory"
+    file:
+        path: /var/www/html
+        state: directory
+        mode: 0777
     register: create
-  - name: clone repo
+
+  - name: "git repo"
     git:
-      repo: https://github.com/doc-vu/phpMySQLapp
-      dest: /var/www/html/
+       repo: 'https://github.com/doc-vu/phpMySQLapp.git'
+       dest: /var/www/html
     register: git_finished
     when: create.changed
 
-  - name: restart apache2
-    service:
-      name: apache2
-      state: restarted
+  - name: "Make sure owned by www-data"
+    file:
+       path: /var/www/html/
+       owner: www-data
+       group: www-data
+       recurse: yes
+    when: git_finished.changed
 
-  - name: change bookDatabase.php
-    replace:
-      path: /var/www/html/books/includes/bookDatabase.php
-      regexp: '127.0.0.1'
-      replace: "{{ group_vars['Database'][0]}}"
-
-  - name: change movieDatabase.php
-    replace:
-      path: /var/www/html/movies/includes/movieDatabase.php
-      regexp: '127.0.0.1'
-      replace: "{{ group_vars['Database'][0] }}"
-  - name: restart apache2
-    service:
-      name: apache2
-      state: restarted
+  - name: "Configuring application through shell"
+    shell: |
+        data=$(tail -1 InventoryOnWebServer  | awk '{ print $1 }')
+        sed -i -e "s/127.0.0.1/${data}/g" /var/www/html/books/includes/bookDatabase.php
+        sed -i -e "s/127.0.0.1/${data}/g" /var/www/html/movies/includes/movieDatabase.php

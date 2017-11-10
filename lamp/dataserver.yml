@@ -1,15 +1,13 @@
 ---
  - name: "DataServer"
-#prep work
- pre_tasks:
-  - name: add server name to hostfile
-    lineinfile:
-      path: /etc/hosts
-      regexp: 'localhost'
-      line: 127.0.0.1 localhost data3 
-
+   hosts: DataServer
+   remote_user: ubuntu
+   gather_facts: no
+   become: true
 #database work
   tasks:
+  - name: "install python"
+    raw: "test -e /usr/bin/python || (apt -y update && apt install -y python-minimal)"
   - name: install mysql and git
     apt: 
       name: '{{ item }}'
